@@ -392,22 +392,22 @@ ${phone}` : ''}
 
     function initialize() {
       var localInoformation = window.localStorage.getItem('polite-mail-information')
-      if(!localInoformation) { return }
-      var object = JSON.parse(localInoformation)
-      info.name = object?.name ?? ''
-      info.department = object?.department ?? ''
-      info.number = object?.number ?? ''
-      info.phone = object?.phone ?? ''
+      if (localInoformation) {
+        var object = JSON.parse(localInoformation)
+        info.name = object?.name ?? ''
+        info.department = object?.department ?? ''
+        info.number = object?.number ?? ''
+        info.phone = object?.phone ?? ''
 
-      nameInput.value = info.name
-      departmentInput.value = info.department
-      numberInput.value = info.number
-      phoneInput.value = info.phone
-
+        nameInput.value = info.name
+        departmentInput.value = info.department
+        numberInput.value = info.number
+        phoneInput.value = info.phone
+      }
       setPreview()
     }
 
-    initialize()
+    window.onload = initialize
   </script>
 </body>
 </html>
