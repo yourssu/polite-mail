@@ -131,8 +131,9 @@
       white-space: break-spaces;
     }
 
-    .mark {
+    .hint {
       color: #8E9398;
+      cursor: pointer;
     }
 
     footer {
@@ -185,8 +186,8 @@
         <input id="subject" type="text" placeholder="과제 채점 기준" required>
       </div>
       <div class="formControl">
-        <label for="professor">교수님 이름<span aria-hidden="true" class="asterisk">*</span></label>
-        <input id="professor" type="text" placeholder="최교수" required>
+        <label for="professor">교수님 이름</label>
+        <input id="professor" type="text" placeholder="최교수">
       </div>
       <div class="formControl">
         <label for="mailAddress">교수님 메일 주소<span aria-hidden="true" class="asterisk">*</span></label>
@@ -220,15 +221,17 @@
   </footer>
 
   <script>
-    var name = ""
-    var department = ""
-    var number = ""
-    var phone = ""
-    var lecture = ""
-    var division = ""
-    var subject = ""
-    var professor = ""
-    var mailAddress = ""
+    var info = {
+      name: '',
+      department: '',
+      number: '',
+      phone: '',
+      lecture: '',
+      division: '',
+      subject: '',
+      professor: '',
+      mailAddress: '',
+    }
 
     var titleText = ""
     var bodyText = ""
@@ -249,15 +252,36 @@
     var professorInput = document.getElementById('professor')
     var mailAddressInput = document.getElementById('mailAddress')
 
+    var previewElement = document.getElementById('preview')
+
+    var inputMap = {
+      name: nameInput,
+      department: departmentInput,
+      number: numberInput,
+      lecture: lectureInput,
+      subject: subjectInput,
+    }
+
     function setLocalStorage() {
       var object = {
-        name: name,
-        department: department,
-        number: number,
-        phone: phone,
+        name: info.name,
+        department: info.department,
+        number: info.number,
+        phone: info.phone,
       }
       window.localStorage.setItem('polite-mail-information', JSON.stringify(object))
     }
+
+    function handleClickPreview(e) {
+      if (e.target.tagName !== 'SPAN') { return }
+
+      inputMap[e.target.attributes.input.value]?.focus()
+    }
+
+    var spans = previewElement.querySelectorAll('span')
+    previewElement.querySelectorAll('span.hint').forEach(markSpan => {
+      markSpan.addEventListener('mouseover', handleClickPreview)
+    })
 
     function isEndWithConsonant(korStr) {
         const finalChrCode = korStr.charCodeAt(korStr.length - 1)
@@ -267,83 +291,74 @@
     };
 
     function setPreview() {
-      titleText = `[${subject ? subject : '<span class="mark">주제</span>'}] ${number ? number : '<span class="mark">학번</span>'} ${name ? name : '<span class="mark">이름</span>'}입니다.`
+      spans.forEach(span => span.removeEventListener('mouseover', handleClickPreview))
+      spans.forEach(span => span.removeEventListener('click', handleClickPreview))
+      var name = info.name ? info.name : '<span input="name" class="hint">이름</span>'
+      var department = info.department ? info.department : '<span input="department" class="hint">학과/부</span>'
+      var number = info.number ? info.number : '<span input="number" class="hint">학번</span>'
+      var phone = info.phone ? `
+------------------
+
+${phone}` : ''
+      var lecture = info.lecture ? info.lecture : '<span input="lecture" class="hint">강의 제목</span>'
+      var division = info.division ? `(${info.division}반)` : ''
+      var subject = info.subject ? info.subject : '<span input="subject" class="hint">주제</span>'
+      var professor = info.professor ? info.professor : ''
+
+      titleText = `[${subject}] ${number} ${name}입니다.`
       bodyText = `안녕하세요 ${professor ? `${professor} ` : ''}교수님.
-[${lecture ? lecture : '<span class="mark">강의제목</span>'}${division ? `(${division}반)` : ''}]${isEndWithConsonant(lecture) ? '을':'를'} 수강하고 있는 ${department ? department : '<span class="mark">학과/부</span>'} ${name ? name : '<span class="mark">이름</span>'}입니다.
-${subject ? subject : '<span class="mark">주제</span>'} 관련해 메일 드리게 되었습니다.
+[${lecture}${division ? `(${division}반)` : ''}]${isEndWithConsonant(lecture) ? '을':'를'} 수강하고 있는 ${department} ${name}입니다.
+${subject} 관련해 메일 드리게 되었습니다.
 
 =====본론은 직접 입력해주세요=====
 
 좋은 하루 되세요.
-${name ? name : '<span class="mark">이름</span>'}드림.${phone ? `
-------------------
-
-${phone}` : ''}
+${name} 드림.${phone}
 `
       titleElement.innerHTML = titleText
       bodyElement.innerHTML = bodyText
 
+      spans = previewElement.querySelectorAll('span')
+      spans.forEach(markSpan => {
+        markSpan.addEventListener('mouseover', handleClickPreview)
+        markSpan.addEventListener('click', handleClickPreview)
+        console.log(markSpan)
+      })
+
+      var mailAddress = info.mailAddress
       var mailBodyText = bodyText.replaceAll('\n', '%0D%0A')
       mailLink.href = `mailto:${mailAddress}?subject=${titleText}&body=${mailBodyText}`
     }
 
-    function onChange(e) {
-      switch(e.target.id) {
-        case 'name':
-          name = e.target.value
-          break;
-        case 'department':
-          department = e.target.value
-          break;
-        case 'number':
-          number = e.target.value
-          break;
-        case 'phone':
-          phone = e.target.value
-          break;
-        case 'lecture':
-          lecture = e.target.value
-          break;
-        case 'division':
-          division = e.target.value
-          break;
-        case 'subject':
-          subject = e.target.value
-          break;
-        case 'professor':
-          professor = e.target.value
-          break;
-        case 'mailAddress':
-          mailAddress = e.target.value
-          break;
-      }
+    function handleChange(e) {
+      info[e.target.id] = e.target.value
       setPreview()
       setLocalStorage()
     }
 
-    nameInput.addEventListener('input', onChange)
-    departmentInput.addEventListener('input', onChange)
-    numberInput.addEventListener('input', onChange)
-    phoneInput.addEventListener('input', onChange)
-    lectureInput.addEventListener('input', onChange)
-    divisionInput.addEventListener('input', onChange)
-    subjectInput.addEventListener('input', onChange)
-    professorInput.addEventListener('input', onChange)
-    mailAddressInput.addEventListener('input', onChange)
+    nameInput.addEventListener('input', handleChange)
+    departmentInput.addEventListener('input', handleChange)
+    numberInput.addEventListener('input', handleChange)
+    phoneInput.addEventListener('input', handleChange)
+    lectureInput.addEventListener('input', handleChange)
+    divisionInput.addEventListener('input', handleChange)
+    subjectInput.addEventListener('input', handleChange)
+    professorInput.addEventListener('input', handleChange)
+    mailAddressInput.addEventListener('input', handleChange)
 
     function initialize() {
       var localInoformation = window.localStorage.getItem('polite-mail-information')
       if(!localInoformation) { return }
       var object = JSON.parse(localInoformation)
-      name = object.name
-      department = object.department
-      number = object.number
-      phone = object.phone
+      info.name = object.name
+      info.department = object.department
+      info.number = object.number
+      info.phone = object.phone
 
-      nameInput.value = name
-      departmentInput.value = department
-      numberInput.value = number
-      phoneInput.value = phone
+      nameInput.value = info.name
+      departmentInput.value = info.department
+      numberInput.value = info.number
+      phoneInput.value = info.phone
 
       setPreview()
     }
