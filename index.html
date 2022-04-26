@@ -233,9 +233,6 @@
       mailAddress: '',
     }
 
-    var titleText = ""
-    var bodyText = ""
-
     var submitButton =document.querySelector('button')
 
     var titleElement = document.getElementById('title')
@@ -279,9 +276,6 @@
     }
 
     var spans = previewElement.querySelectorAll('span')
-    previewElement.querySelectorAll('span.hint').forEach(markSpan => {
-      markSpan.addEventListener('mouseenter', handleClickPreview)
-    })
 
     function isEndWithConsonant(korStr) {
         const finalChrCode = korStr.charCodeAt(korStr.length - 1)
@@ -290,44 +284,94 @@
         return finalConsonantCode !== 0
     };
 
-    function setPreview() {
-      spans.forEach(span => span.removeEventListener('mouseenter', handleClickPreview))
-      spans.forEach(span => span.removeEventListener('click', handleClickPreview))
-      var name = info.name ? info.name : '<span input="name" class="hint">이름</span>'
-      var department = info.department ? info.department : '<span input="department" class="hint">학과/부</span>'
-      var number = info.number ? info.number : '<span input="number" class="hint">학번</span>'
-      var phone = info.phone ? `
-------------------
-
-${phone}` : ''
-      var lecture = info.lecture ? info.lecture : '<span input="lecture" class="hint">강의 제목</span>'
-      var division = info.division ? `(${info.division}반)` : ''
-      var subject = info.subject ? info.subject : '<span input="subject" class="hint">주제</span>'
-      var professor = info.professor ? info.professor : ''
-
-      titleText = `[${subject}] ${number} ${name}입니다.`
-      bodyText = `안녕하세요 ${professor ? `${professor} ` : ''}교수님.
+    function getTitle({
+      name,
+      number,
+      subject,
+    }) {
+      return `[${subject}] ${number} ${name}입니다.`
+    }
+    function getBody({
+      name,
+      department,
+      phone,
+      lecture,
+      division,
+      subject,
+      professor,
+    }) {
+      return `안녕하세요 ${professor ? `${professor} ` : ''}교수님.
 [${lecture}${division ? `(${division}반)` : ''}]${isEndWithConsonant(lecture) ? '을':'를'} 수강하고 있는 ${department} ${name}입니다.
 ${subject} 관련해 메일 드리게 되었습니다.
 
 =====본론은 직접 입력해주세요=====
 
 좋은 하루 되세요.
-${name} 드림.${phone}
+${name} 드림.${phone ? `
+------------------
+
+${phone}` : ''}
 `
-      titleElement.innerHTML = titleText
-      bodyElement.innerHTML = bodyText
+    }
+
+    function setPreview() {
+      spans.forEach(span => span.removeEventListener('mouseenter', handleClickPreview))
+      spans.forEach(span => span.removeEventListener('click', handleClickPreview))
+      var name = info.name ? info.name : '<span input="name" class="hint">이름</span>'
+      var department = info.department ? info.department : '<span input="department" class="hint">학과/부</span>'
+      var number = info.number ? info.number : '<span input="number" class="hint">학번</span>'
+      var phone = info.phone
+      var lecture = info.lecture ? info.lecture : '<span input="lecture" class="hint">강의 제목</span>'
+      var division = info.division ? `(${info.division}반)` : ''
+      var subject = info.subject ? info.subject : '<span input="subject" class="hint">주제</span>'
+      var professor = info.professor ? info.professor : ''
+
+      titleElement.innerHTML = getTitle({
+        subject,
+        number,
+        name,
+      })
+      bodyElement.innerHTML = getBody({
+        name,
+        department,
+        phone,
+        lecture,
+        division,
+        subject,
+        professor,
+      })
 
       spans = previewElement.querySelectorAll('span')
       spans.forEach(markSpan => {
         markSpan.addEventListener('mouseover', handleClickPreview)
         markSpan.addEventListener('click', handleClickPreview)
-        console.log(markSpan)
       })
 
+      name = info.name
+      department = info.department
+      number = info.number
+      lecture = info.lecture
+      division = info.division
+      subject = info.subject
+      professor = info.professor
+
+      var titleText = getTitle({
+        subject,
+        number,
+        name,
+      })
+      var bodyText = getBody({
+        name,
+        department,
+        phone,
+        lecture,
+        division,
+        subject,
+        professor,
+      }).replaceAll('\n', '%0D%0A')
+
       var mailAddress = info.mailAddress
-      var mailBodyText = bodyText.replaceAll('\n', '%0D%0A')
-      mailLink.href = `mailto:${mailAddress}?subject=${titleText}&body=${mailBodyText}`
+      mailLink.href = `mailto:${mailAddress}?subject=${titleText}&body=${bodyText}`
     }
 
     function handleChange(e) {
@@ -350,10 +394,10 @@ ${name} 드림.${phone}
       var localInoformation = window.localStorage.getItem('polite-mail-information')
       if(!localInoformation) { return }
       var object = JSON.parse(localInoformation)
-      info.name = object.name
-      info.department = object.department
-      info.number = object.number
-      info.phone = object.phone
+      info.name = object?.name ?? ''
+      info.department = object?.department ?? ''
+      info.number = object?.number ?? ''
+      info.phone = object?.phone ?? ''
 
       nameInput.value = info.name
       departmentInput.value = info.department
